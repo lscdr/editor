@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>wangEditor default mode</title>
+  <link href="https://cdn.bootcdn.net/ajax/libs/normalize/8.0.1/normalize.min.css" rel="stylesheet">
+  <!-- <link href="https://cdn.jsdelivr.net/npm/@wangeditor/editor@latest/dist/css/style.css" rel="stylesheet"> -->
+  <link href="https://unpkg.com/@wangeditor/editor@latest/dist/css/style.css" rel="stylesheet">
+  <link href="./css/layout.css" rel="stylesheet">
+
+  <script src="./js/custom-elem.js"></script>
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+</head>
+
+<body>
+  <demo-nav title="AI 小助手"></demo-nav>
+  <div class="page-container">
+    <div class="page-left">
+      <!-- <demo-menu></demo-menu> -->
+      <div style="outline: 1px solid red" class="page-choice">
+        <p><strong>请输入内容：</strong></p>
+        <input type="text" placeholder="input your question" style="height: 10%;" id="user-input">
+        <p><strong>Prompt:</strong></p>
+        <select name="sel" id="prompt-list"></select>
+        <div class="div-hide" id="div-hide">
+          <!-- <p></p><input type="text" placeholder="input your question"> -->
+        </div>
+        <div class="url-parse" id="url-parse">
+          <p>补充url：</p>
+          <input type="text" placeholder="请填写url链接" id="url-parse-input">
+          <select name="sel" id="url-type">
+            <!-- <option value="3">请选择url类型</option> -->
+            <option value="3">站点</option>
+            <option value="1">rss源</option>
+          </select>
+        </div>
+        <input type="button" value="助手解答" style="margin-top: 100px;" id="submit-button">
+        
+
+      </div>
+      <p><strong>关键字提炼助手：</strong></p>
+        <div class="yl-keywords">
+          <input type="text", placeholder="请输入要提炼的文本">
+          <input type="button" value="开始提炼" id="yl-keywords">
+        </div>
+      
+      
+    </div>
+    <div class="page-middle" style="outline: 1px solid brown">
+      <p><strong>猜你想问：</strong><input type="button" name="relate-q" id="relate-q" value="刷新"></p>
+      <div class="page-related-q" id="page-related-q">
+        <p></p>
+      </div>
+    </div>
+
+    <div class="page-right">
+      <!-- 编辑器 DOM -->
+      <div style="border: 1px solid #ccc;">
+        <div id="editor-toolbar" style="border-bottom: 1px solid #ccc;"></div>
+        <div id="editor-text-area" style="height: 500px"></div>
+      </div>
+
+      <!-- 内容状态 -->
+      <p style="background-color: #f1f1f1;">
+        Text length: <span id="total-length"></span>；
+        Selected text length: <span id="selected-length"></span>；
+      </p>
+    </div>
+  </div>
+
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@wangeditor/editor@latest/dist/index.min.js"></script> -->
+  <script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
+  <script>
+    const E = window.wangEditor
+
+    // 切换语言
+    const LANG = location.href.indexOf('lang=en') > 0 ? 'en' : 'zh-CN'
+    E.i18nChangeLanguage(LANG)
+
+    window.editor = E.createEditor({
+      selector: '#editor-text-area',
+      html: '<p><br></p>',
+      config: {
+        placeholder: 'Type here...',
+        MENU_CONF: {
+          uploadImage: {
+            fieldName: 'your-fileName',
+            base64LimitSize: 10 * 1024 * 1024 // 10M 以下插入 base64
+          }
+        },
+        onChange(editor) {
+          // console.log(editor.getHtml())
+
+          // 选中文字
+          const selectionText = editor.getSelectionText()
+          document.getElementById('selected-length').innerHTML = selectionText.length
+          // 全部文字
+          const text = editor.getText().replace(/\n|\r/mg, '')
+          document.getElementById('total-length').innerHTML = text.length
+        }
+      }
+    })
+
+    window.toolbar = E.createToolbar({
+      editor,
+      selector: '#editor-toolbar',
+      config: {}
+    });
+
+    var idmap = new Array();
+    var text = String();
+    var model_id = String();
+    $(function() {
+            $("#prompt-list").html("<option value='0'>无</option>")
+            
+            $.ajax({
+                url: "http://43.154.145.166:8800/v1/api/prompt_template",
+                dataType: "json",
+                type: "get",
+                async: '',
+                data: {},
+                success: function(res) {
+                    console.log(res);
+                    prompt_list = res.data.items
+                    for(var i=0; i<prompt_list.length; i++){
+                      var o=document.createElement("option")
+                      o.value = prompt_list[i]._id;
+                      o.text = prompt_list[i].prompt_name;
+                      o.content = prompt_list[i].content;
+                      o.model_id = prompt_list[i].model_id
+                      $('#prompt-list').append(o);
+                      idmap[i] = {'id': o.value, 'text': o.content, 'model_id': o.model_id, 'name': o.text}
+                    }
+                }});
+              }
+    );
+    $("#prompt-list").change(function(){
+      text = ''
+      var sele = $("#prompt-list").val()
+      for(i=0; i<idmap.length; i++){
+        if(idmap[i].id==sele){
+          text = idmap[i].text;
+          model_id = idmap[i].model_id;
+          break;
+        }
+      };
+      document.getElementById("div-hide").innerHTML = ''
+      if(text){
+        var check = /{{{.*?}}}/g;
+        var varis = new Set(text.match(check))
+        $('#div-hide').append(`<p>补充Prompt：</p>`)
+        varis.forEach((element) => {
+          $('#div-hide').append(`<p><input type="text" placeholder=${element.slice(3, -3)}></p>`)
+        })
+    
+      }else{
+        // $('#div-hide').append(`<p><input type="text" placeholder="请输入文本内容"></p>`)
+      }
+      
+    });
+    var butt = document.getElementById('submit-button');
+    var keywords = document.getElementById('yl-keywords');
+    var flush_q = document.getElementById('relate-q');
+    butt.onclick = function(){
+      var ssput = $('#div-hide').find('input');
+      var user_url = $('#url-parse-input').val()
+      var urltye = $('#url-type').val()
+      var userinput = $('#user-input').val()
+      var extext = userinput
+      function withchat(){
+        for(i=0;i<ssput.length;i++){
+        if(ssput[i].placeholder == 'input your question'){
+          // var extext = ssput[i].value
+        // }else{
+        var _extext = extext + `${ssput[i].placeholder}:${ssput[i].value}`
+        extext = _extext
+      // }
+    }}
+      var final_res = text + extext
+      
+      var dataobj = new Object()
+      dataobj.content = final_res;
+      if(model_id){
+        dataobj._id = model_id;
+      }else{
+        dataobj._id = '6475b02bfdf6513a1c08bf5b'
+      }
+      
+      $.ajax({
+        url: "http://43.154.145.166:8801/v1/api/chat",
+        type: "post",
+        data: JSON.stringify(dataobj),
+        success: function(res){
+          console.log(res.data.content, 111111111111111);
+
+          editor.dangerouslyInsertHtml(res.data.content)
+          
+        },
+        error: function(res){
+          console.log(res)
+        }
+      });
+      for(i=0;i<idmap.length;i++){
+        if(idmap[i].name == '生成问题'){
+          var dataobj2 = new Object();
+          dataobj2._id = idmap[i].model_id;
+          _con = idmap[i].text + 'context:'
+          dataobj2.content = _con + extext;
+          console.log('q--->', dataobj2.content)
+          // console.log(dataobj2.content)
+          $.ajax({
+          url: "http://43.154.145.166:8801/v1/api/chat",
+          type: "post",
+          data: JSON.stringify(dataobj2),
+          success: function(res){
+            console.log('<========')
+          $('#page-related-q').append(`<p>${res.data.content}</p>`)
+        }
+      })
+        }}
+      }
+
+      if(user_url){
+        var urlobj = new Object()
+        urlobj.type = urltye
+        urlobj.url = user_url
+        $.ajax({
+          url: "http://43.154.145.166:8818/crawl/run",
+          type: "post",
+          headers: {'Content-type':'application/json'},
+          dataType: "json",
+          data: JSON.stringify(urlobj),
+          complete: function(res){
+            // console.log(res.data)
+            // var crawl_id = res.data.session_id
+            // var intervalId = setInterval(function(){
+            setTimeout(function(){
+              $.ajax({
+              url: `http://43.154.145.166:8818/crawl/session/records?session_url=${user_url}`,
+              dataType: "json",
+              type: "get",
+              async: '',
+              data: {},
+              success: function(res){
+                var crawl_res = res.data
+                // console.log(crawl_res)
+                for(i=0;i<crawl_res.length;i++){
+                  
+                  if(crawl_res[i].status=='success'){
+                    var _extext = extext + crawl_res[i].data.content
+                    extext = _extext
+                  }
+                }
+                withchat();
+        }
+              
+      })
+            }, 3000)
+            
+      // })
+        }
+        
+      })
+      
+      }else{
+        withchat();
+      }
+
+      
+      
+      // console.log(ssput.attr('placeholder'))
+    };
+    keywords.onclick = function(){
+      var fmdata = new FormData()
+      var kyinput = $('#yl-keywords').val()
+      fmdata.append('text', kyinput)
+      $.ajax({
+        url: "http://43.154.145.166:8125/sim",
+        type: "post",
+        processData: false,
+        contentType: false,
+        data: fmdata,
+        // dataType: 'json',
+        success: function(res){
+          $('#yl-keywords').append(`<p><input type="text" value=${res}}></p>`)
+        },
+        complete: function(res){
+          console.log(res, 2222222)
+        }
+
+      })
+    };
+
+    flush_q.onclick = function(){
+      console.log(editor.getText());
+      console.log(idmap)
+      if(editor.getText()){
+        document.getElementById("page-related-q").innerHTML = ''
+      for(i=0;i<idmap.length;i++){
+        if(idmap[i].name == '生成问题'){
+          var dataobj = new Object();
+          dataobj._id = idmap[i].model_id;
+          _con = idmap[i].text + 'content:'
+          dataobj.content = _con + editor.getText();
+          console.log(dataobj)
+          $.ajax({
+          url: "http://43.154.145.166:8801/v1/api/chat",
+          type: "post",
+          data: JSON.stringify(dataobj),
+          success: function(res){
+          console.log(res.data.content);
+          $('#page-related-q').append(`<p>${res.data.content}</p>`)
+        }
+      })
+        }
+      }
+      }else{
+        alert('请添加内容再试')
+      }
+      
+      
+    }
+  
+  </script>
+</body>
+
+</html>
