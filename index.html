@@ -217,6 +217,7 @@
           data: JSON.stringify(dataobj2),
           success: function(res){
             console.log('<========')
+            document.getElementById("page-related-q").innerHTML = ''
           $('#page-related-q').append(`<p>${res.data.content}</p>`)
         }
       })
