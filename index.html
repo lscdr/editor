@@ -23,11 +23,13 @@
       <div style="outline: 1px solid red" class="page-choice">
         <p><strong>请输入内容：</strong></p>
         <input type="text" placeholder="input your question" style="height: 10%;" id="user-input">
+        <div class="prompt-family" style="background-color: #ccc;">
         <p><strong>Prompt:</strong></p>
         <select name="sel" id="prompt-list"></select>
         <div class="div-hide" id="div-hide">
           <!-- <p></p><input type="text" placeholder="input your question"> -->
         </div>
+      </div>
         <div class="url-parse" id="url-parse">
           <p>补充url：</p>
           <input type="text" placeholder="请填写url链接" id="url-parse-input">
@@ -36,6 +38,11 @@
             <option value="3">站点</option>
             <option value="1">rss源</option>
           </select>
+        </div>
+        <p></p><p></p>
+        <div class="fill-kw" id="fill-kw">
+          <input type="text" id="fill-kw-it" placeholder="补充说明">
+          <!-- <p onclick="alert('sdfd')">11</p> -->
         </div>
         <input type="button" value="助手解答" style="margin-top: 100px;" id="submit-button">
         
@@ -113,6 +120,23 @@
     var idmap = new Array();
     var text = String();
     var model_id = String();
+    var auto_fill = function(tt){
+      document.getElementById('fill-kw').innerHTML = ''
+      $('#fill-kw').append(`<input type="text" id="fill-kw-it" value='${tt}'>`)
+    }
+    var parse_q = function(content){
+      // content = '[1:nishishei],[2:woshishei]'
+      var pattern = /\[.*?\]/g;
+      var all_q = content.match(pattern)
+      document.getElementById("page-related-q").innerHTML = ''
+      for(i=0;i<all_q.length;i++){
+        var _lin = all_q[i].slice(1, -1)
+        $('#page-related-q').append(`<p id='qs-sel${i}' onclick="auto_fill(\'${_lin}\')">${all_q[i].slice(1, -1)}</p>`)
+        
+        // $(`#qs-sel${i}`).onclick = auto_fill(_lin);
+      }
+      
+    }
     $(function() {
             $("#prompt-list").html("<option value='0'>无</option>")
             
@@ -169,7 +193,8 @@
       var user_url = $('#url-parse-input').val()
       var urltye = $('#url-type').val()
       var userinput = $('#user-input').val()
-      var extext = userinput
+      var fill_ky = $('#fill-kw-it').val()
+      var extext = userinput + fill_ky
       function withchat(){
         for(i=0;i<ssput.length;i++){
         if(ssput[i].placeholder == 'input your question'){
@@ -194,7 +219,7 @@
         type: "post",
         data: JSON.stringify(dataobj),
         success: function(res){
-          console.log(res.data.content, 111111111111111);
+          // console.log(res.data.content, 111111111111111);
 
           editor.dangerouslyInsertHtml(res.data.content)
           
@@ -218,7 +243,8 @@
           success: function(res){
             console.log('<========')
             document.getElementById("page-related-q").innerHTML = ''
-          $('#page-related-q').append(`<p>${res.data.content}</p>`)
+          // $('#page-related-q').append(`<p>${res.data.content}</p>`)
+          parse_q(res.data.content)
         }
       })
         }}
