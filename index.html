@@ -49,9 +49,9 @@
 
       </div>
       <p><strong>关键字提炼助手：</strong></p>
-        <div class="yl-keywords">
-          <input type="text", placeholder="请输入要提炼的文本">
-          <input type="button" value="开始提炼" id="yl-keywords">
+        <div class="yl-keywords" id="yl-keywords">
+          <input type="text", placeholder="请输入要提炼的文本" id="yl-keywords-t">
+          <input type="button" value="开始提炼" id="yl-keywords-bt">
         </div>
       
       
@@ -137,6 +137,36 @@
       }
       
     }
+    var ky_add = function(content){
+      var fmdata = new FormData()
+      // var kyinput = $('#yl-keywords').val()
+      fmdata.append('text', content)
+      // console.log(kyinput, fmdata.get('text'))
+      var res = []
+      $.ajax({
+        url: "http://43.154.145.166:8125/sim",
+        type: "post",
+        processData: false,
+        contentType: false,
+        // async: false,
+        data: fmdata,
+        // dataType: 'json',
+        success: function(res){
+          console.log(res)
+          var entities = JSON.parse(res)
+          for(i=0;i<entities.sim.length;i++){
+            res.push(entities.sim[i][0])
+          }
+          res = res.join(',')
+        },
+        complete: function(res){
+          console.log(res, 2222222)
+        }
+
+      })
+      return res
+      
+    }
     $(function() {
             $("#prompt-list").html("<option value='0'>无</option>")
             
@@ -186,7 +216,7 @@
       
     });
     var butt = document.getElementById('submit-button');
-    var keywords = document.getElementById('yl-keywords');
+    var keywords = document.getElementById('yl-keywords-bt');
     var flush_q = document.getElementById('relate-q');
     butt.onclick = function(){
       var ssput = $('#div-hide').find('input');
@@ -197,15 +227,15 @@
       var extext = userinput + fill_ky
       function withchat(){
         for(i=0;i<ssput.length;i++){
-        if(ssput[i].placeholder == 'input your question'){
+        // if(ssput[i].placeholder == 'input your question'){
           // var extext = ssput[i].value
         // }else{
         var _extext = extext + `${ssput[i].placeholder}:${ssput[i].value}`
         extext = _extext
       // }
-    }}
+    }
       var final_res = text + extext
-      
+      console.log(final_res, '<-----final---input')
       var dataobj = new Object()
       dataobj.content = final_res;
       if(model_id){
@@ -219,9 +249,9 @@
         type: "post",
         data: JSON.stringify(dataobj),
         success: function(res){
-          // console.log(res.data.content, 111111111111111);
+          console.log(res, 'withchat res');
 
-          editor.dangerouslyInsertHtml(res.data.content)
+          // editor.dangerouslyInsertHtml(res.data.content)
           
         },
         error: function(res){
@@ -229,11 +259,34 @@
         }
       });
       for(i=0;i<idmap.length;i++){
+        
         if(idmap[i].name == '生成问题'){
+          // console.log(idmap[i])
+          var _ml_id = idmap[i].model_id
+          var _scwt = idmap[i].text
+          var fmdata = new FormData()
+          fmdata.append('text', extext)
+          $.ajax({
+        url: "http://43.154.145.166:8125/sim",
+        type: "post",
+        processData: false,
+        contentType: false,
+        // async: false,
+        data: fmdata,
+        // dataType: 'json',
+        success: function(res){
+          console.log(res)
+          var entities = JSON.parse(res)
+          var ret = []
+          for(i=0;i<entities.sim.length;i++){
+            ret.push(entities.sim[i][0])
+          }
+          ret = ret.join(',')
           var dataobj2 = new Object();
-          dataobj2._id = idmap[i].model_id;
-          _con = idmap[i].text + 'context:'
-          dataobj2.content = _con + extext;
+          console.log()
+          dataobj2._id = _ml_id;
+          _con = _scwt + '\ncontext:'
+          dataobj2.content = _con + extext + '。\n实体词:' + ret;
           console.log('q--->', dataobj2.content)
           // console.log(dataobj2.content)
           $.ajax({
@@ -247,6 +300,30 @@
           parse_q(res.data.content)
         }
       })
+        },
+        complete: function(res){
+        }
+
+      })
+          // $.ajaxSettings.async = false;
+          // var entities = ky_add(extext)
+      //     var dataobj2 = new Object();
+      //     dataobj2._id = idmap[i].model_id;
+      //     _con = idmap[i].text + 'context:'
+      //     dataobj2.content = _con + extext + '实体词:' + entities;
+      //     console.log('q--->', dataobj2.content)
+      //     // console.log(dataobj2.content)
+      //     $.ajax({
+      //     url: "http://43.154.145.166:8801/v1/api/chat",
+      //     type: "post",
+      //     data: JSON.stringify(dataobj2),
+      //     success: function(res){
+      //       console.log('<========')
+      //       document.getElementById("page-related-q").innerHTML = ''
+      //     // $('#page-related-q').append(`<p>${res.data.content}</p>`)
+      //     parse_q(res.data.content)
+      //   }
+      // })
         }}
       }
 
@@ -302,8 +379,9 @@
     };
     keywords.onclick = function(){
       var fmdata = new FormData()
-      var kyinput = $('#yl-keywords').val()
+      var kyinput = $('#yl-keywords-t').val()
       fmdata.append('text', kyinput)
+      console.log(kyinput, fmdata.get('text'))
       $.ajax({
         url: "http://43.154.145.166:8125/sim",
         type: "post",
@@ -312,7 +390,14 @@
         data: fmdata,
         // dataType: 'json',
         success: function(res){
-          $('#yl-keywords').append(`<p><input type="text" value=${res}}></p>`)
+          console.log(res, 11111)
+          var ret = []
+          var entities = JSON.parse(res)
+          for(i=0;i<entities.sim.length;i++){
+            ret.push(entities.sim[i][0])
+          }
+          ret = ret.join(',')
+          $('#yl-keywords').append(`<p><input type="text" value=${ret}></p>`)
         },
         complete: function(res){
           console.log(res, 2222222)
