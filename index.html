@@ -252,7 +252,7 @@
         success: function(res){
           console.log(res, 'withchat res');
 
-          // editor.dangerouslyInsertHtml(res.data.content)
+          editor.dangerouslyInsertHtml(res.data.content)
           
         },
         error: function(res){
@@ -266,7 +266,7 @@
           var _ml_id = idmap[i].model_id
           var _scwt = idmap[i].text
           var fmdata = new FormData()
-          fmdata.append('text', extext)
+          fmdata.append('text', userinput)
           $.ajax({
         url: "http://43.154.145.166:8125/sim",
         type: "post",
