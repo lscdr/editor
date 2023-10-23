@@ -21,8 +21,11 @@
     <div class="page-left">
       <!-- <demo-menu></demo-menu> -->
       <div style="outline: 1px solid red" class="page-choice">
-        <p><strong>请输入内容：</strong></p>
-        <input type="text" placeholder="input your question" style="height: 10%;" id="user-input">
+        <!-- <p></p><p></p> -->
+        <button id="submit-button" style="position: absolute; top: 10px; right: 10px;">开始撰写</button>
+        <p><strong>输入内容创作描述：</strong></p>
+        <!-- <input type="text" placeholder="input your question" style="height: 10%; width: 80%;" id="user-input"> -->
+        <textarea name="input your question" id="user-input" cols="30" rows="5"></textarea>
         <div class="prompt-family" style="background-color: #ccc;">
         <p><strong>Prompt:</strong></p>
         <select name="sel" id="prompt-list"></select>
@@ -30,36 +33,51 @@
           <!-- <p></p><input type="text" placeholder="input your question"> -->
         </div>
       </div>
+      <p></p><p></p>
+      <p>补充文本：</p>
+      <div class="fill-kw" id="fill-kw">
+        <textarea name="fill-kw-it" id="fill-kw-it" cols="30" rows="3"></textarea>
+        <!-- <input type="text" id="fill-kw-it" placeholder="补充文本"> -->
+        <!-- <p onclick="alert('sdfd')">11</p> -->
+      </div>
         <div class="url-parse" id="url-parse">
           <p>补充url：</p>
-          <input type="text" placeholder="请填写url链接" id="url-parse-input">
-          <select name="sel" id="url-type">
-            <!-- <option value="3">请选择url类型</option> -->
+          <input type="text" placeholder="请填写url链接(多个请用;隔开)" id="url-parse-input" style="width: 80%;">
+          <!-- <select name="sel" id="url-type">
+            <option value="3">请选择url类型</option>
             <option value="3">站点</option>
             <option value="1">rss源</option>
-          </select>
+          </select> -->
         </div>
-        <p></p><p></p>
-        <div class="fill-kw" id="fill-kw">
-          <input type="text" id="fill-kw-it" placeholder="补充说明">
-          <!-- <p onclick="alert('sdfd')">11</p> -->
-        </div>
-        <input type="button" value="开始" style="margin-top: 100px;" id="submit-button">
+        <!-- <p></p><p></p> -->
+        <!-- <div class="fill-kw" id="fill-kw">
+          <input type="text" id="fill-kw-it" placeholder="补充文本">
+          <p onclick="alert('sdfd')">11</p>
+        </div> -->
+        <!-- <input type="button" value="开始" style="margin-top: 100px;" id="submit-button"> -->
         
 
-      </div>
-      <p><strong>关键字提炼助手：</strong></p>
+      <!-- </div> -->
+      <!-- <p><strong>关键字提炼助手：</strong></p>
         <div class="yl-keywords" id="yl-keywords">
           <input type="text", placeholder="请输入要提炼的文本" id="yl-keywords-t">
           <input type="button" value="开始提炼" id="yl-keywords-bt">
-        </div>
+        </div> -->
       
       
     </div>
-    <div class="page-middle" style="outline: 1px solid brown">
-      <p><strong>猜你想问：</strong><input type="button" name="relate-q" id="relate-q" value="刷新"></p>
+    </div>
+    <div class="page-middle">
+      
       <div class="page-related-q" id="page-related-q">
+        <p><strong>猜你想问：</strong>
+          <!-- <input type="button" name="relate-q" id="relate-q" value="刷新"> -->
+        </p>
         <p></p>
+      </div>
+      <div class="page-middle-under" id="page-middle-under">
+        <p><h3>创作文章结构规划：</h3></p>
+        <button onclick="editor.dangerouslyInsertHtml('111111111')">3333333</button>
       </div>
     </div>
 
@@ -76,10 +94,11 @@
         Selected text length: <span id="selected-length"></span>；
       </p>
     </div>
-  </div>
+ 
 
   <!-- <script src="https://cdn.jsdelivr.net/npm/@wangeditor/editor@latest/dist/index.min.js"></script> -->
-  <script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script>
+  <!-- <script src="https://unpkg.com/@wangeditor/editor@latest/dist/index.js"></script> -->
+  <script src="./js/ed.js"></script>
   <script>
     const E = window.wangEditor
 
@@ -122,10 +141,17 @@
     var model_id = String();
     var auto_fill = function(tt){
       document.getElementById('fill-kw').innerHTML = ''
-      $('#fill-kw').append(`<input type="text" id="fill-kw-it" value='${tt}'>`)
+      // $('#fill-kw').append(`<input type="text" id="fill-kw-it" value='${tt}'>`)
+      $('#fill-kw').append(`<textarea name="fill-kw-it" id="fill-kw-it" cols="30" rows="3">${tt}</textarea>`)
+      
     }
+    // 填入右边编辑器
+    var fill_text = function(tt){
+      editor.dangerouslyInsertHtml(tt)
+
+    }
+    // 解析生成问题返回的问题
     var parse_q = function(content){
-      // content = '[1:nishishei],[2:woshishei]'
       var pattern = /\[.*?\]/g;
       var all_q = content.match(pattern)
       console.log(all_q)
@@ -137,6 +163,17 @@
         // $(`#qs-sel${i}`).onclick = auto_fill(_lin);
       }
       
+    }
+    // 解析背景调查prompt返回的内容
+    var parse_backgroud = function(content){
+      var pa = /\d.*?\n/g;
+      var all_b = content.match(pa)
+      console.log(content, '========>', all_b)
+      document.getElementById("page-middle-under").innerHTML = ''
+      all_b.forEach((ele) => {
+        $('#page-middle-under').append(`<p onclick="fill_text(\'${ele}\')">${ele}</p>`)
+      })
+
     }
     var ky_add = function(content){
       var fmdata = new FormData()
@@ -202,40 +239,37 @@
           break;
         }
       };
-      document.getElementById("div-hide").innerHTML = ''
-      if(text){
-        var check = /{{{.*?}}}/g;
-        var varis = new Set(text.match(check))
-        $('#div-hide').append(`<p>补充Prompt：</p>`)
-        varis.forEach((element) => {
-          $('#div-hide').append(`<p><input type="text" placeholder=${element.slice(3, -3)}></p>`)
-        })
+      // document.getElementById("div-hide").innerHTML = ''
+      // if(text){
+      //   var check = /{{{.*?}}}/g;
+      //   var varis = new Set(text.match(check))
+      //   $('#div-hide').append(`<p>补充Prompt：</p>`)
+      //   varis.forEach((element) => {
+      //     $('#div-hide').append(`<p><input type="text" placeholder=${element.slice(3, -3)}></p>`)
+      //   })
     
-      }else{
-        // $('#div-hide').append(`<p><input type="text" placeholder="请输入文本内容"></p>`)
-      }
+      // }else{
+      //   // $('#div-hide').append(`<p><input type="text" placeholder="请输入文本内容"></p>`)
+      // }
       
     });
     var butt = document.getElementById('submit-button');
-    var keywords = document.getElementById('yl-keywords-bt');
-    var flush_q = document.getElementById('relate-q');
+    // var keywords = document.getElementById('yl-keywords-bt');
+    // var flush_q = document.getElementById('relate-q');
     butt.onclick = function(){
-      var ssput = $('#div-hide').find('input');
+      // var ssput = $('#div-hide').find('input');
       var user_url = $('#url-parse-input').val()
-      var urltye = $('#url-type').val()
+      // var urltye = $('#url-type').val()
       var userinput = $('#user-input').val()
-      var fill_ky = $('#fill-kw-it').val()
-      var extext = userinput + fill_ky
+      var extra_input = $('#fill-kw-it').val()
+      var url_text = ''
+      var extext = userinput + extra_input
       function withchat(){
-        for(i=0;i<ssput.length;i++){
-        // if(ssput[i].placeholder == 'input your question'){
-          // var extext = ssput[i].value
-        // }else{
-        var _extext = extext + `${ssput[i].placeholder}:${ssput[i].value}`
-        extext = _extext
-      // }
-    }
-      var final_res = text + extext
+    //     for(i=0;i<ssput.length;i++){
+    //     var _extext = extext + `${ssput[i].placeholder}:${ssput[i].value}`
+    //     extext = _extext
+    // }
+      var final_res = text + extext + url_text
       console.log(final_res, '<-----final---input')
       var dataobj = new Object()
       dataobj.content = final_res;
@@ -251,7 +285,7 @@
         data: JSON.stringify(dataobj),
         success: function(res){
           console.log(res, 'withchat res');
-
+          editor.focus()
           editor.dangerouslyInsertHtml(res.data.content)
           
         },
@@ -259,6 +293,7 @@
           console.log(res)
         }
       });
+      // yl补充关键字并生成相关问题
       for(i=0;i<idmap.length;i++){
         
         if(idmap[i].name == '生成问题'){
@@ -284,10 +319,9 @@
           }
           ret = ret.join(',')
           var dataobj2 = new Object();
-          console.log()
           dataobj2._id = _ml_id;
-          _con = _scwt + '\ncontext:'
-          dataobj2.content = _con + extext + '。\nEntity_name:' + ret;
+          // _con = _scwt + '\ncontext:'
+          dataobj2.content = _scwt + extext + ret;
           console.log('q--->', dataobj2.content)
           // console.log(dataobj2.content)
           $.ajax({
@@ -302,140 +336,173 @@
         }
       })
         },
-        complete: function(res){
-        }
 
       })
-          // $.ajaxSettings.async = false;
-          // var entities = ky_add(extext)
-      //     var dataobj2 = new Object();
-      //     dataobj2._id = idmap[i].model_id;
-      //     _con = idmap[i].text + 'context:'
-      //     dataobj2.content = _con + extext + '实体词:' + entities;
-      //     console.log('q--->', dataobj2.content)
-      //     // console.log(dataobj2.content)
-      //     $.ajax({
-      //     url: "http://43.154.145.166:8801/v1/api/chat",
-      //     type: "post",
-      //     data: JSON.stringify(dataobj2),
-      //     success: function(res){
-      //       console.log('<========')
-      //       document.getElementById("page-related-q").innerHTML = ''
-      //     // $('#page-related-q').append(`<p>${res.data.content}</p>`)
-      //     parse_q(res.data.content)
-      //   }
-      // })
-        }}
+        }
+        // 生成背景调查提纲
+        if(idmap[i].name == '背景调查提纲'){
+          var dataobj2 = new Object();
+          dataobj2._id = _ml_id;
+          dataobj2.content = idmap[i].text + extext;
+          console.log('背景调查：：：', dataobj2.content)
+          // console.log(dataobj2.content)
+          $.ajax({
+          url: "http://43.154.145.166:8801/v1/api/chat",
+          type: "post",
+          data: JSON.stringify(dataobj2),
+          success: function(res){
+            parse_backgroud(res.data.content)
+        }
+      })
+        }
+      }
       }
 
       if(user_url){
         var urlobj = new Object()
-        urlobj.type = urltye
-        urlobj.url = user_url
+        user_url = user_url.split(';')
+        urlobj.url_list = user_url
         $.ajax({
-          url: "http://43.154.145.166:8818/crawl/run",
+          url: 'http://43.154.145.166:8818/crawl/text_run',
           type: "post",
           headers: {'Content-type':'application/json'},
           dataType: "json",
           data: JSON.stringify(urlobj),
-          complete: function(res){
-            // console.log(res.data)
-            // var crawl_id = res.data.session_id
-            // var intervalId = setInterval(function(){
-            setTimeout(function(){
-              $.ajax({
-              url: `http://43.154.145.166:8818/crawl/session/records?session_url=${user_url}`,
-              dataType: "json",
-              type: "get",
-              async: '',
-              data: {},
-              success: function(res){
-                var crawl_res = res.data
-                // console.log(crawl_res)
-                for(i=0;i<crawl_res.length;i++){
-                  
-                  if(crawl_res[i].status=='success'){
-                    var _extext = extext + crawl_res[i].data.content
-                    extext = _extext
-                  }
-                }
-                withchat();
-        }
-              
-      })
-            }, 3000)
-            
-      // })
-        }
-        
-      })
-      
+          success: function(res){
+            res.data.forEach((ele) => {
+              url_text = url_text + ele.content
+            })
+            withchat()
+          }
+        })
       }else{
-        withchat();
+        withchat()
       }
+     
+    };
+
+      //   var urlobj = new Object()
+      //   urlobj.type = urltye
+      //   urlobj.url = user_url
+      //   $.ajax({
+      //     url: "http://43.154.145.166:8818/crawl/run",
+      //     type: "post",
+      //     headers: {'Content-type':'application/json'},
+      //     dataType: "json",
+      //     data: JSON.stringify(urlobj),
+      //     complete: function(res){
+      //       setTimeout(function(){
+      //         $.ajax({
+      //         url: `http://43.154.145.166:8818/crawl/session/records?session_url=${user_url}`,
+      //         dataType: "json",
+      //         type: "get",
+      //         async: '',
+      //         data: {},
+      //         success: function(res){
+      //           var crawl_res = res.data
+      //           // console.log(crawl_res)
+      //           for(i=0;i<crawl_res.length;i++){
+                  
+      //             if(crawl_res[i].status=='success'){
+      //               var _extext = extext + crawl_res[i].data.content
+      //               extext = _extext
+      //             }
+      //           }
+      //           withchat();
+      //   }
+              
+      // })
+      //       }, 3000)
+            
+      // // })
+      //   }
+        
+      // })
+      
+      // }else{
+      //   withchat();
+      // }
 
       
       
       // console.log(ssput.attr('placeholder'))
-    };
-    keywords.onclick = function(){
-      var fmdata = new FormData()
-      var kyinput = $('#yl-keywords-t').val()
-      fmdata.append('text', kyinput)
-      console.log(kyinput, fmdata.get('text'))
-      $.ajax({
-        url: "http://43.154.145.166:8125/sim",
-        type: "post",
-        processData: false,
-        contentType: false,
-        data: fmdata,
-        // dataType: 'json',
-        success: function(res){
-          console.log(res, 11111)
-          var ret = []
-          var entities = JSON.parse(res)
-          for(i=0;i<entities.sim.length;i++){
-            ret.push(entities.sim[i][0])
-          }
-          ret = ret.join(',')
-          $('#yl-keywords').append(`<p><input type="text" value=${ret}></p>`)
-        },
-        complete: function(res){
-          console.log(res, 2222222)
-        }
+    
+    // keywords.onclick = function(){
+    //   var fmdata = new FormData()
+    //   var kyinput = $('#yl-keywords-t').val()
+    //   fmdata.append('text', kyinput)
+    //   console.log(kyinput, fmdata.get('text'))
+    //   $.ajax({
+    //     url: "http://43.154.145.166:8125/sim",
+    //     type: "post",
+    //     processData: false,
+    //     contentType: false,
+    //     data: fmdata,
+    //     // dataType: 'json',
+    //     success: function(res){
+    //       console.log(res, 11111)
+    //       var ret = []
+    //       var entities = JSON.parse(res)
+    //       for(i=0;i<entities.sim.length;i++){
+    //         ret.push(entities.sim[i][0])
+    //       }
+    //       ret = ret.join(',')
+    //       $('#yl-keywords').append(`<p><input type="text" value=${ret}></p>`)
+    //     },
+    //     complete: function(res){
+    //       console.log(res, 2222222)
+    //     }
 
-      })
-    };
+    //   })
+    // };
 
-    flush_q.onclick = function(){
-      console.log(editor.getText());
-      console.log(idmap)
-      if(editor.getText()){
-        document.getElementById("page-related-q").innerHTML = ''
-      for(i=0;i<idmap.length;i++){
-        if(idmap[i].name == '生成问题'){
-          var dataobj = new Object();
-          dataobj._id = idmap[i].model_id;
-          _con = idmap[i].text + 'content:'
-          dataobj.content = _con + editor.getText();
-          console.log(dataobj)
-          $.ajax({
-          url: "http://43.154.145.166:8801/v1/api/chat",
-          type: "post",
-          data: JSON.stringify(dataobj),
-          success: function(res){
-          console.log(res.data.content);
-          $('#page-related-q').append(`<p>${res.data.content}</p>`)
-        }
-      })
-        }
-      }
-      }else{
-        alert('请添加内容再试')
-      }
+    // flush_q.onclick = function(){
+    //   console.log(editor.getText());
+    //   console.log(idmap)
+    //   if(editor.getText()){
+    //     document.getElementById("page-related-q").innerHTML = ''
+    //   for(i=0;i<idmap.length;i++){
+    //     if(idmap[i].name == '生成问题'){
+    //       var dataobj = new Object();
+    //       dataobj._id = idmap[i].model_id;
+    //       _con = idmap[i].text + 'content:'
+    //       dataobj.content = _con + editor.getText();
+    //       console.log(dataobj)
+    //       $.ajax({
+    //       url: "http://43.154.145.166:8801/v1/api/chat",
+    //       type: "post",
+    //       data: JSON.stringify(dataobj),
+    //       success: function(res){
+    //       console.log(res.data.content);
+    //       $('#page-related-q').append(`<p>${res.data.content}</p>`)
+    //     }
+    //   })
+    //     }
+    //   }
+    //   }else{
+    //     alert('请添加内容再试')
+    //   }
       
       
-    }
+    // }
+
+    // 增加 ‘续写’
+    setTimeout(function(){
+      var hidden = document.getElementById('goon-write')
+      let ob = new MutationObserver(entries => {
+        console.log(entries)
+        $('#goon-write').append('<div class="w-e-bar-item"><button type="button" onclick="go_w_bt();">续写</div>')
+      
+    })
+    ob.observe(hidden, {attributes: true, attributeFilter: ['class']})
+    
+}, 3000)
+// var go_write = document.getElementById('go-write-bt')
+function go_w_bt(){
+  alert('nihao')
+
+}
+
   
   </script>
 </body>
