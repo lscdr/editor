@@ -22,10 +22,11 @@
       <!-- <demo-menu></demo-menu> -->
       <div style="outline: 1px solid red" class="page-choice">
         <!-- <p></p><p></p> -->
-        <button id="submit-button" style="position: absolute; top: 10px; right: 10px;">开始撰写</button>
+        <button id="submit-button" style="position: absolute; top: 5px; right: 5px;">开始撰写</button>
         <p><strong>输入内容创作描述：</strong></p>
+        <p></p>
         <!-- <input type="text" placeholder="input your question" style="height: 10%; width: 80%;" id="user-input"> -->
-        <textarea name="input your question" id="user-input" cols="30" rows="5"></textarea>
+        <textarea name="input your question" id="user-input" cols="45" rows="5"></textarea>
         <div class="prompt-family" style="background-color: #ccc;">
         <p><strong>Prompt:</strong></p>
         <select name="sel" id="prompt-list"></select>
@@ -36,18 +37,21 @@
       <p></p><p></p>
       <p>补充文本：</p>
       <div class="fill-kw" id="fill-kw">
-        <textarea name="fill-kw-it" id="fill-kw-it" cols="30" rows="3"></textarea>
+        <textarea name="fill-kw-it" id="fill-kw-it" cols="45" rows="3"></textarea>
         <!-- <input type="text" id="fill-kw-it" placeholder="补充文本"> -->
         <!-- <p onclick="alert('sdfd')">11</p> -->
       </div>
         <div class="url-parse" id="url-parse">
           <p>补充url：</p>
-          <input type="text" placeholder="请填写url链接(多个请用;隔开)" id="url-parse-input" style="width: 80%;">
+          <input type="text" placeholder="请填写url链接(多个请用;隔开)" id="url-parse-input" style="width: 98%;">
           <!-- <select name="sel" id="url-type">
             <option value="3">请选择url类型</option>
             <option value="3">站点</option>
             <option value="1">rss源</option>
           </select> -->
+        </div>
+        <div class="show_error_res" id="show_error_res">
+          <!-- 显示gpt调用失败的消息 -->
         </div>
         <!-- <p></p><p></p> -->
         <!-- <div class="fill-kw" id="fill-kw">
@@ -77,7 +81,6 @@
       </div>
       <div class="page-middle-under" id="page-middle-under">
         <p><h3>创作文章结构规划：</h3></p>
-        <button onclick="editor.dangerouslyInsertHtml('111111111')">3333333</button>
       </div>
     </div>
 
@@ -285,12 +288,18 @@
         data: JSON.stringify(dataobj),
         success: function(res){
           console.log(res, 'withchat res');
-          editor.focus()
-          editor.dangerouslyInsertHtml(res.data.content)
+          if(res.success){
+            editor.focus()
+            editor.dangerouslyInsertHtml(res.data.content)
+          }else{
+            $('#show_error_res').append(`<p>编辑器文本生成失败：${res.msg}</p>`)
+          }
+          
           
         },
         error: function(res){
           console.log(res)
+          
         }
       });
       // yl补充关键字并生成相关问题
@@ -302,26 +311,26 @@
           var _scwt = idmap[i].text
           var fmdata = new FormData()
           fmdata.append('text', userinput)
-          $.ajax({
-        url: "http://43.154.145.166:8125/sim",
-        type: "post",
-        processData: false,
-        contentType: false,
-        // async: false,
-        data: fmdata,
-        // dataType: 'json',
-        success: function(res){
-          console.log(res)
-          var entities = JSON.parse(res)
-          var ret = []
-          for(i=0;i<entities.sim.length;i++){
-            ret.push(entities.sim[i][0])
-          }
-          ret = ret.join(',')
+        //   $.ajax({
+        // url: "http://43.154.145.166:8125/sim",
+        // type: "post",
+        // processData: false,
+        // contentType: false,
+        // // async: false,
+        // data: fmdata,
+        // // dataType: 'json',
+        // success: function(res){
+          // console.log(res)
+          // var entities = JSON.parse(res)
+          // var ret = []
+          // for(i=0;i<entities.sim.length;i++){
+          //   ret.push(entities.sim[i][0])
+          // }
+          // ret = ret.join(',')
           var dataobj2 = new Object();
           dataobj2._id = _ml_id;
           // _con = _scwt + '\ncontext:'
-          dataobj2.content = _scwt + extext + ret;
+          dataobj2.content = _scwt + extext;
           console.log('q--->', dataobj2.content)
           // console.log(dataobj2.content)
           $.ajax({
@@ -330,14 +339,21 @@
           data: JSON.stringify(dataobj2),
           success: function(res){
             console.log('<========')
-            document.getElementById("page-related-q").innerHTML = ''
-          // $('#page-related-q').append(`<p>${res.data.content}</p>`)
-          parse_q(res.data.content)
-        }
-      })
+            if(res.success){
+              document.getElementById("page-related-q").innerHTML = ''
+              parse_q(res.data.content)
+            }else{
+              $('#show_error_res').append(`<p>生成问题失败：${res.msg}</p>`)
+            }
+            
         },
-
+          error: function(res){
+            
+          }
       })
+        // },
+
+      // })
         }
         // 生成背景调查提纲
         if(idmap[i].name == '背景调查提纲'){
@@ -499,7 +515,28 @@
 }, 3000)
 // var go_write = document.getElementById('go-write-bt')
 function go_w_bt(){
-  alert('nihao')
+  var sel_text = editor.getSelectionText()
+  var prompt_t = '请根据以下内容并结合自己的理解进行续写补全后续内容：'
+  var dataobj = new Object();
+  dataobj._id = '6475b02bfdf6513a1c08bf5b';
+  dataobj.content = prompt_t + sel_text;
+  $.ajax({
+          url: "http://43.154.145.166:8801/v1/api/chat",
+          type: "post",
+          data: JSON.stringify(dataobj),
+          success: function(res){
+            if(res.success){
+              editor.focus()
+              editor.dangerouslyInsertHtml(res.data.content)
+            }else{
+              $('#show_error_res').append(`<p>续写失败：${res.msg}</p>`)
+            }
+            
+        },
+          error: function(res){
+            $('#show_error_res').append(`<p>续写失败：${res}</p>`)
+          }
+      })
 
 }
 
