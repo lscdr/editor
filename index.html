@@ -16,7 +16,7 @@
 </head>
 
 <body>
-  <demo-nav title="AI 小助手"></demo-nav>
+  <demo-nav title="阅历好篇章AI助手"></demo-nav>
   <div class="page-container">
     <div class="page-left">
       <!-- <demo-menu></demo-menu> -->
@@ -28,7 +28,8 @@
         <!-- <input type="text" placeholder="input your question" style="height: 10%; width: 80%;" id="user-input"> -->
         <textarea name="input your question" id="user-input" cols="45" rows="5"></textarea>
         <div class="prompt-family" style="background-color: #ccc;">
-        <p><strong>Prompt:</strong></p>
+          <p></p>
+        <!-- <p><strong>Prompt:</strong></p> -->
         <select name="sel" id="prompt-list"></select>
         <div class="div-hide" id="div-hide">
           <!-- <p></p><input type="text" placeholder="input your question"> -->
@@ -155,13 +156,14 @@
     }
     // 解析生成问题返回的问题
     var parse_q = function(content){
-      var pattern = /\[.*?\]/g;
+      // var pattern = /\d.*?\n/g;
+      var pattern = /\d:.*/g
       var all_q = content.match(pattern)
       console.log(all_q)
       document.getElementById("page-related-q").innerHTML = ''
       for(i=0;i<all_q.length;i++){
-        var _lin = all_q[i].slice(1, -1)
-        $('#page-related-q').append(`<p id='qs-sel${i}' onclick="auto_fill(\'${_lin}\')">${all_q[i].slice(1, -1)}</p>`)
+        var _lin = all_q[i].slice(2, -1)
+        $('#page-related-q').append(`<p id='qs-sel${i}' onclick="auto_fill(\'${_lin}\')">${all_q[i].slice(2, -1)}</p>`)
         
         // $(`#qs-sel${i}`).onclick = auto_fill(_lin);
       }
@@ -169,12 +171,12 @@
     }
     // 解析背景调查prompt返回的内容
     var parse_backgroud = function(content){
-      var pa = /\d.*?\n/g;
+      var pa = /.*?\n/g;
       var all_b = content.match(pa)
       console.log(content, '========>', all_b)
       document.getElementById("page-middle-under").innerHTML = ''
       all_b.forEach((ele) => {
-        $('#page-middle-under').append(`<p onclick="fill_text(\'${ele}\')">${ele}</p>`)
+        $('#page-middle-under').append(`<p onclick='fill_text(\'${ele}\')'>${ele}</p>`)
       })
 
     }
@@ -212,7 +214,7 @@
             $("#prompt-list").html("<option value='0'>无</option>")
             
             $.ajax({
-                url: "http://43.154.145.166:8800/v1/api/prompt_template",
+                url: "http://43.154.145.166:8800/v1/api/prompt_template?pageSize=100",
                 dataType: "json",
                 type: "get",
                 async: '',
@@ -279,7 +281,7 @@
       if(model_id){
         dataobj._id = model_id;
       }else{
-        dataobj._id = '6475b02bfdf6513a1c08bf5b'
+        dataobj._id = '6544cf5a0d4165c2ded44e1c'
       }
       
       $.ajax({
@@ -338,7 +340,7 @@
           type: "post",
           data: JSON.stringify(dataobj2),
           success: function(res){
-            console.log('<========')
+            console.log('<========',res.data.content)
             if(res.success){
               document.getElementById("page-related-q").innerHTML = ''
               parse_q(res.data.content)
@@ -358,7 +360,7 @@
         // 生成背景调查提纲
         if(idmap[i].name == '背景调查提纲'){
           var dataobj2 = new Object();
-          dataobj2._id = _ml_id;
+          dataobj2._id = idmap[i].model_id;
           dataobj2.content = idmap[i].text + extext;
           console.log('背景调查：：：', dataobj2.content)
           // console.log(dataobj2.content)
@@ -367,7 +369,12 @@
           type: "post",
           data: JSON.stringify(dataobj2),
           success: function(res){
-            parse_backgroud(res.data.content)
+            if(res.success){
+              parse_backgroud(res.data.content)
+            }else{
+              $('#show_error_res').append(`<p>提纲结构失败：${res.msg}</p>`)
+            }
+            
         }
       })
         }
@@ -518,7 +525,7 @@ function go_w_bt(){
   var sel_text = editor.getSelectionText()
   var prompt_t = '请根据以下内容并结合自己的理解进行续写补全后续内容：'
   var dataobj = new Object();
-  dataobj._id = '6475b02bfdf6513a1c08bf5b';
+  dataobj._id = '6544cf5a0d4165c2ded44e1c';
   dataobj.content = prompt_t + sel_text;
   $.ajax({
           url: "http://43.154.145.166:8801/v1/api/chat",
@@ -539,9 +546,10 @@ function go_w_bt(){
       })
 
 }
-
+  
   
   </script>
 </body>
 
 </html>
+<!-- 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 -->
