@@ -160,7 +160,7 @@
       var pattern = /\d:.*/g
       var all_q = content.match(pattern)
       console.log(all_q)
-      document.getElementById("page-related-q").innerHTML = ''
+      document.getElementById("page-related-q").innerHTML = '<p><strong>猜你想问：</strong>'
       for(i=0;i<all_q.length;i++){
         var _lin = all_q[i].slice(2, -1)
         $('#page-related-q').append(`<p id='qs-sel${i}' onclick="auto_fill(\'${_lin}\')">${all_q[i].slice(2, -1)}</p>`)
@@ -174,7 +174,7 @@
       var pa = /.*?\n/g;
       var all_b = content.match(pa)
       console.log(content, '========>', all_b)
-      document.getElementById("page-middle-under").innerHTML = ''
+      document.getElementById("page-middle-under").innerHTML = '<p><h3>创作文章结构规划：</h3></p>'
       all_b.forEach((ele) => {
         $('#page-middle-under').append(`<p onclick='fill_text(\'${ele}\')'>${ele}</p>`)
       })
