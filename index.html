@@ -176,7 +176,7 @@
       console.log(content, '========>', all_b)
       document.getElementById("page-middle-under").innerHTML = '<p><h3>创作文章结构规划：</h3></p>'
       all_b.forEach((ele) => {
-        $('#page-middle-under').append(`<p onclick='fill_text(\'${ele}\')'>${ele}</p>`)
+        $('#page-middle-under').append(`<p onclick="fill_text(\'${ele}\')">${ele}</p>`)
       })
 
     }
@@ -305,9 +305,10 @@
         }
       });
       // yl补充关键字并生成相关问题
+      console.log(idmap, 111111111111)
       for(i=0;i<idmap.length;i++){
         
-        if(idmap[i].name == '生成问题'){
+        if(idmap[i].id == '648bf0a11e887a121e15991e'){
           // console.log(idmap[i])
           var _ml_id = idmap[i].model_id
           var _scwt = idmap[i].text
@@ -358,7 +359,7 @@
       // })
         }
         // 生成背景调查提纲
-        if(idmap[i].name == '背景调查提纲'){
+        if(idmap[i].id == '6538b872603ffff765a95de0'){
           var dataobj2 = new Object();
           dataobj2._id = idmap[i].model_id;
           dataobj2.content = idmap[i].text + extext;
