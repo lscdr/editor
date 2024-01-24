@@ -274,7 +274,8 @@
     //     var _extext = extext + `${ssput[i].placeholder}:${ssput[i].value}`
     //     extext = _extext
     // }
-      var final_res = text + extext + url_text
+      text = text.replace('context:{{{context}}}', '')
+      var final_res = text + 'context:{{{' + extext + url_text + '}}}'
       console.log(final_res, '<-----final---input')
       var dataobj = new Object()
       dataobj.content = final_res;
@@ -333,7 +334,9 @@
           var dataobj2 = new Object();
           dataobj2._id = _ml_id;
           // _con = _scwt + '\ncontext:'
-          dataobj2.content = _scwt + extext;
+          _scwt = _scwt.replace('context:{{{context}}}', '')
+          var final_c = _scwt + 'context:{{{' + extext + '}}}'
+          dataobj2.content = final_c;
           console.log('q--->', dataobj2.content)
           // console.log(dataobj2.content)
           $.ajax({
@@ -521,6 +524,33 @@
     ob.observe(hidden, {attributes: true, attributeFilter: ['class']})
     
 }, 3000)
+window.onload = function(){
+  // 添加撰写内容和续写button
+  var parentElement = document.getElementById("editor-toolbar"); 
+  console.log(parentElement, 11111)
+  var fir_div = parentElement.getElementsByTagName("div")[0];
+  var new1 = document.createElement('div')
+  var new1_new = document.createElement('button')
+  new1.className = 'w-e-bar-item';
+  new1_new.type = 'button'
+  new1_new.addEventListener('click', go_w_bt)
+  new1_new.textContent = '撰写内容'
+  new1.appendChild(new1_new)
+
+  var new2 = document.createElement('div')
+  var new2_new = document.createElement('button')
+  new2.className = 'w-e-bar-item';
+  new2_new.type = 'button'
+  new2_new.addEventListener('click', go_w_bt)
+  new2_new.textContent = '续写'
+  new2.appendChild(new2_new)
+
+  fir_div.appendChild(new1)
+  fir_div.appendChild(new2)
+  // fir_div.append('<div class="w-e-bar-item"><button type="button" onclick="go_w_bt();">撰写内容</div>')
+  // fir_div.append('<div class="w-e-bar-item"><button type="button" onclick="go_w_bt();">续写</div>')
+}
+
 // var go_write = document.getElementById('go-write-bt')
 function go_w_bt(){
   var sel_text = editor.getSelectionText()
